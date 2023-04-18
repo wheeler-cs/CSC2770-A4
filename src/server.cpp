@@ -15,55 +15,76 @@ void handle_connect (int data_socket)
     }
     catch (...) // For now, just catch any exception and return an error
     {
-        ASErrorHandler (0, 0);
+        ASErrorHandler (0, "");
         fclose (f_desc);
         return;
     }
-    /*
-	if parse throws an exception then
-		create error message 
-		  and send error message to client
-		close fp
-		return
-	fi
-    */
 
-    /*
-	initialize parmeter to the empty string
-	for each (key,value) pair in options where key is not "SIZE"
-		make a string key + "=" + value + "\n"
-		    and append it to parameter
-	rof
-	call AStyleMain and pass it parameter
-		// see below for special parameters
-	if an error occurred
-		create error message and send msg to
-		    client
+	// Get all map options (excluding SIZE) and store them in a single string
+	std::string parameter = "";
+	std::map<std::string, std::string>::iterator it = option_map.begin();
+	for (; it != option_map.end(); it++)
+	{
+		if (it->first != "SIZE")
+		{
+			parameter += (it->first + "=" + it->second + "\n");
+		}
+	}
+
+
+	std::string options = "";
+
+    Req_Error = false;
+    Req_Estr = "";
+
+	// TODO: Figure out why this won't work
+    char* styled_text = AStyleMain(file_text.c_str(), options.c_str(), ASErrorHandler, ASMemoryAlloc);
+    if (Req_Error) {
+        std::string ret_message("ERR\nSIZE=" + std::to_string(Req_Estr.size()) + "\n\n" + Req_Estr.c_str());
+        fprintf(f_desc, "%s", ret_message.c_str());
+    } else {
+        std::string ret_message("OK\nSIZE=" + std::to_string(strlen(styled_text)) + "\n\n" + styled_text);
+        fprintf(f_desc, "%s", ret_message.c_str());
+    }
+
+	// Check if an error occurred during the execution of AStyleMain
+	if (Req_Error)
+	{
+		// If an error occurred, create err msg and send msg to client
+		fclose (f_desc);
+	}
 	else
-		create OK message and send to client
-	fi
-	close fp
-    */
+	{
+		// Create OK message and send to client
+	}
+	fclose (f_desc);
 }
 
 
 void parse (FILE* f_ptr, std::map<std::string, std::string>& options, std::string& doc)
 {
-    /*
-	// in:    fp      - file stream fp
-	// in/out:
-	//        header  - if header is not null, what header
-	// out:
-	//        options - a map of options as key,value pairs
-	//        doc     - The document from the message body
-	read (fgets) the first line from fp into head  // trim the newline
-	if eof then
-		throw runtime error "Unpected end of file when reading header"
-	fi
-	
-	if head is not "ASTYLE" then
-			throw runtime error "Expected header ASTYLE, but got $head"
-	fi
+	char* head = ASMemoryAlloc (255);
+	fgets (head, 255, f_ptr);
+	if (feof (f_ptr))
+	{
+		throw std::runtime_error ("Unexpected end of file when reading header");
+	}
+	else if (head != "ASTYLE")
+	{
+		std::string bad_header = head; // Cast from C-string to C++ string to allow concat
+		throw std::runtime_error ("Expceted header ASTYLE, but got " + bad_header);
+	}
+
+	char* buffer = ASMemoryAlloc (255);
+	do
+	{
+		fgets (buffer, 255, f_ptr);
+		if (buffer[0] == '\n')
+			break;
+
+		
+	} while (!feof (f_ptr));
+	/*
 	for each line read from fp
 		if line is a newline then
 			break
@@ -87,30 +108,6 @@ void parse (FILE* f_ptr, std::map<std::string, std::string>& options, std::strin
 		throw error "Bad code size"
 	fi
 	read size bytes into string doc
-    */
-}
-
-void handle_connect()
-{
-    /*
-    // in handle_connect()...
-
-    // code before call to AStyleMain ...
-     
-    Req_Error = false;
-    Req_Estr = "";
-    char* textOut = AStyleMain(doc.c_str(), opts.c_str(), ASErrorHandler, ASMemoryAlloc);
-    if (Req_Error) {
-        std::string ret_message("ERR\nSIZE=" + std::to_string(Req_Estr.size()) + "\n\n" + Req_Estr.c_str());
-        fprintf(fp, "%s", ret_message.c_str());
-    } else {
-        std::string ret_message("OK\nSIZE=" + std::to_string(strlen(textOut)) + "\n\n" + textOut);
-        fprintf(fp, "%s", ret_message.c_str());
-    }
-	// now check Req_Error, and if it is true, send back an error to client.  See handle_connect()
-    // pseudocode.
-  
-    // more code in handle connect after call to AStyleMain ...
     */
 }
 
