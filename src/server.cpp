@@ -3,19 +3,32 @@
 
 void handle_connect (int data_socket)
 {
+    // Variables needed for `parse` call
+    std::map <std::string, std::string> option_map;
+    std::string file_text = "";
+    FILE* f_desc = fdopen (data_socket, "r+");
+
+    // Attempt to read data sent and process accordingly
+    try
+    {
+        parse (f_desc, option_map, file_text);
+    }
+    catch (...) // For now, just catch any exception and return an error
+    {
+        ASErrorHandler (0, 0);
+        fclose (f_desc);
+        return;
+    }
     /*
-	// parameters: ns - data socket
-	create file stream fp from ns // use fdopen
-	// Note: header and doc are of type string
-	//       options is a map of string to string
-	call parse, passing it fp,options,
-	    and doc
 	if parse throws an exception then
 		create error message 
 		  and send error message to client
 		close fp
 		return
 	fi
+    */
+
+    /*
 	initialize parmeter to the empty string
 	for each (key,value) pair in options where key is not "SIZE"
 		make a string key + "=" + value + "\n"
@@ -101,22 +114,38 @@ void handle_connect()
     */
 }
 
+
+/**
+ * @fn ASErrorHandler
+ * @brief Handles errors thrown by assigning values to global error variables.
+ * 
+ * @param err_num The number identifier of the error.
+ * @param err_msg The message that accompanies the error.
+ * 
+ * @see server.hpp
+ * 
+ */
 void ASErrorHandler (int err_num, const char* err_msg)
 {
-    /*
     //NOTE: Req_Error and Req_Estr are global variables
-    //std::cout << "astyle error " << errorNumber << "\n"
-    //     << errorMessage << std::endl;
+    //std::cerr << "astyle error " << err_num << "\n"
+    //          << err_msg << std::endl;
     Req_Error = true;
-    Req_Estr += errorMessage + std::string("\n");
-    */
+    Req_Estr += err_msg + std::string("\n");
 }
 
+
+/**
+ * @fn ASMemoryAlloc
+ * @brief Allocates a character buffer and returns the pointer.
+ * 
+ * @param req_mem Memory (in bytes) that needs to be allocated for the buffer.
+ * @returns A pointer to the chunk of memory allocated.
+ * 
+ */
 char* ASMemoryAlloc (unsigned long req_mem)
 {
-    /*
     // Error condition is checked after return 
-    char* buffer = new (std::nothrow) char [memoryNeeded];
+    char* buffer = new (std::nothrow) char [req_mem];
     return buffer;
-    */
 }
