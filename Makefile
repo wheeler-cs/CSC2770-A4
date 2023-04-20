@@ -1,31 +1,24 @@
 CC=g++
-CFLAGS=-Wall -pedantic -c
-
-SRC_DIR=src
-BUILD_DIR=build
-OUT_EXE=server
+CFLAGS=-g -Wall -pedantic
 
 
 # Build targets
-all: $(BUILD_DIR)/main.o $(BUILD_DIR)/server.o
-	$(CC) -lastyle $^ -o $(BUILD_DIR)/$(OUT_EXE) ./lib/libastyle-2.06d.so
+all: main.o server.o
+	$(CC) $(CFLAGS) $^ libastyle-2.06d.so -o server -lastyle
 
-# main.o
-$(BUILD_DIR)/main.o: $(SRC_DIR)/main.cpp $(SRC_DIR)/server.hpp
-	$(CC) $(CFLAGS) $< -o $@
+main.o: main.cpp server.hpp
+	$(CC) -c main.cpp -o main.o
 
-# server.o
-$(BUILD_DIR)/server.o: $(SRC_DIR)/server.cpp $(SRC_DIR)/server.hpp
-	$(CC) $(CFLAGS) $< -o $@
+server.o: server.cpp server.hpp
+	$(CC) -c server.cpp -o server.o
 
 
 # Utility targets
 .PHONY: clean
 clean:
-	rm $(BUILD_DIR)/*.o
-	rm $(BUILD_DIR)/$(OUT_EXE)
+	rm ./*.o
+	rm ./server
 
 .PHONY: run
 run:
-	LD_LIBRARY_PATH=./lib
 	./$(BUILD_DIR)/$(OUT_EXE)
